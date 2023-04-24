@@ -58,8 +58,32 @@ Add:
 	j 	$31
 	.end Add
 
-	.globl Exit
-	.ent	Exit
+	.globl Mul
+	.ent	Mul
+Mul:
+	addiu $2,$0,SC_Mul
+	syscall
+	j 	$31
+	.end Mul
+
+	.global Div
+	.ent 	 Div
+Div:
+	addiu $2,$0,SC_Div
+	syscall
+	j 	$31
+	.end Div
+
+	.global Pow
+	.ent	 Pow
+Pow:
+	addiu $2,$0,SC_Pow
+	syscall
+	j 	$31
+	.end Pow
+
+	.global Exit
+	.ent 	 Exit
 Exit:
 	addiu $2,$0,SC_Exit
 	syscall

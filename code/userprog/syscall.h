@@ -41,6 +41,9 @@
 #define SC_Clock        20
 
 #define SC_Add		42
+#define SC_Mul		43
+#define SC_Div 	44
+#define SC_Pow 	45
 
 #ifndef IN_ASM
 
@@ -63,6 +66,9 @@ void Halt();
  */ 
 
 int Add(int op1, int op2);
+int Mul(int op1, int op2);
+int Div(int op1, int op2);
+int Pow(int op1, int op2);
 
 /* Address space control operations: Exit, Exec, Execv, and Join */
 

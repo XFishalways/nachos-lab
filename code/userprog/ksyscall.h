@@ -21,11 +21,31 @@ void SysHalt()
   kernel->interrupt->Halt();
 }
 
-
 int SysAdd(int op1, int op2)
 {
   return op1 + op2;
 }
+
+int SysMul(int op1, int op2)
+{
+  return op1 * op2;
+}
+
+int SysDiv(int op1, int op2)
+{
+  return op1 / op2;
+}
+
+int SysPow(int op1, int op2)
+{
+  int base = op1;
+  for(int i = 0; i < op2; i++)
+  {
+    op1 = op1 * base;
+  }
+  return op1;
+}
+
 
 
 

@@ -58,6 +58,30 @@ Add:
 	j 	$31
 	.end Add
 
+	.globl Mul
+	.ent	Mul
+Mul:
+	addiu $2,$0,SC_Mul
+	syscall
+	j 	$31
+	.end Mul
+
+	.globl Div
+	.ent	Div
+Div:
+	addiu $2,$0,SC_Div
+	syscall
+	j 	$31
+	.end Div
+
+	.globl Pow
+	.ent	Pow
+Pow:
+	addiu $2,$0,SC_Pow
+	syscall
+	j 	$31
+	.end Pow
+
 	.globl Exit
 	.ent	Exit
 Exit:

@@ -6,7 +6,7 @@
 2. 修改Nachos线程管理模式，根据用户自身ID限制系统最多只能产生128个线程；
 3. 将线程调度算法从FCFS转变为基于优先级的调度算法。
 
-## Code modification
+## Code Modification
 
 - threads/scheduler.h && scheduler.cc
 - threads/thread.h && thread.cc

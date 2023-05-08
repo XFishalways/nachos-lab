@@ -265,6 +265,10 @@ main(int argc, char **argv)
     ::tut::runner.get().run_tests(); //run all unit tests
 #endif 
     
+    int count;
+    for(count=0;count<128;count++)
+    	threadId[count]=0;
+    
     kernel = new Kernel(argc, argv);
 
     kernel->Initialize();

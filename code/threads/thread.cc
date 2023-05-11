@@ -482,9 +482,7 @@ SimpleThread(int which)
 //	to call SimpleThread, and then calling SimpleThread ourselves.
 //----------------------------------------------------------------------
 
-void
-Thread::SelfTest()
-{
+void Thread::SelfTest() {
     DEBUG(dbgThread, "Entering Thread::SelfTest");
 
     Thread *t = new Thread("forked thread");
@@ -493,35 +491,27 @@ Thread::SelfTest()
     kernel->currentThread->Yield();
     SimpleThread(0);
 }
-void
-Thread::setTid(int tid)
-{
+
+void Thread::setTid(int tid) {
     this->tid=tid;
 }
 
-void
-Thread::setUid(int uid)
-{
+void Thread::setUid(int uid) {
     this->uid=uid;
 }
-int
-Thread::getUid()
-{
+
+int Thread::getUid() {
     return this->uid;
 }
-int
-Thread::getTid()
-{
+
+int Thread::getTid() {
     return this->tid;
 }
 int
-Thread::getPriority()
-{
+Thread::getPriority() {
     return priority;
 }
-void
-Thread::setPriority(int priority)
-{
+void Thread::setPriority(int priority) {
     if(priority<0)
         this->priority=0;
     else if (priority>6)
@@ -531,8 +521,8 @@ Thread::setPriority(int priority)
     	this->priority=priority;
     }
 }
-void Thread::SelfTest1()
-{
+
+void Thread::SelfTest1() {
     DEBUG(dbgThread, "Entering Thread::SelfTest1");
     
     Thread *t1 =new Thread("forked thread1");
@@ -552,8 +542,10 @@ void Thread::SelfTest1()
 
 void Thread::SelfTest2()
 {
+    DEBUG(dbgThread, "Entering Thread::SelfTest2");
+
     int count;
-    for(count=0;count<300;count++)
+    for(count=0;count<130;count++)
     {
     	Thread *t =new Thread("forked thread1");
     	ThreadPrint(t);
@@ -562,7 +554,7 @@ void Thread::SelfTest2()
 
 void Thread::SelfTest3()
 {
-    DEBUG(dbgThread, "Entering Thread::SelfTest1");
+    DEBUG(dbgThread, "Entering Thread::SelfTest3");
     
     Thread *t1 =new Thread("forked thread1",2);
     ThreadPrint(t1);

@@ -105,9 +105,11 @@ class Thread {
     char* getName() { return (name); }
     void Print() { cout << name <<":"<<uid<<":"<<tid<<":"<<priority<<endl; }
     void SelfTest();		// test whether thread impl is working
-    void SelfTest1();
-    void SelfTest2();
-    void SelfTest3();
+
+    // 3 self-designed Function by XFishalways
+    void SelfTest1();  // normal version
+    void SelfTest2();  // test whether max_thread is set to 128
+    void SelfTest3();  // switch to scheduler based on input priorty
 
   private:
     // some of the private data for this class is listed above
@@ -141,10 +143,10 @@ class Thread {
     
     int getUid();
     int getTid();
+    int getPriority();
     void setUid(int uid);
     void setTid(int tid);
     void setPriority(int priority);
-    int getPriority();
 ;};
 
 // external function, dummy routine whose sole job is to call Thread::Print

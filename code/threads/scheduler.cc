@@ -30,8 +30,7 @@ int compare(Thread*x,Thread* y)
     	return -1;
     else if(x->getPriority()==y->getPriority())
     	return 0;
-    else
-    {
+    else {
     	return 1;
     }
 }
@@ -91,7 +90,7 @@ Scheduler::FindNextToRun ()
     ASSERT(kernel->interrupt->getLevel() == IntOff);
 
     if (readyList->IsEmpty()) {
-	return NULL;
+	    return NULL;
     } else {
     	return readyList->RemoveFront();
     }

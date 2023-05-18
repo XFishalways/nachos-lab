@@ -571,3 +571,65 @@ void Thread::SelfTest3()
     t4->Fork((VoidFunctionPtr) SimpleThread, t4->getTid());
 }
 
+// Producer & Consumer
+// Add by XFishalways
+// Lab 9
+
+Lock* mutex = new Lock("producerConsumerLock");
+Lock* lockC = new Lock("lockC");
+Lock* lockP = new Lock("lockP");
+Condition* condc = new Condition("ConsumerCondition");
+Condition* condp = new Condition("ProducerCondition");
+
+int cache = -1;
+
+void producer(int val) {
+    for(int i = 0; i < 10; i++) {
+        mutex->Acquire();
+        while(cache != -1) {
+            printf("tid: %d, Producer is waiting because cache is full\n", val);
+            lockP->Acquire();
+            condp->Signal(lockP);
+            lockP->Release();
+        }
+        cache = i;
+        printf("Producer produces an item: %d\n", i);
+
+        lockC->Acquire();
+        condc->Signal(lockC);
+        lockC->Release();
+
+        mutex->Release();
+        kernel->currentThread->Yield();
+    }
+}
+
+void consumer(int val) {
+    for (int i = 0; i < 10; i++) {
+        mutex->Acquire();
+        while (cache == -1) {
+            lockC->Acquire();
+            condc->Signal(lockC);
+            lockC->Release();
+        }
+        cache = -1;
+        printf("Consumer consumes an item: %d\n", i);
+
+        lockP->Acquire();
+        condp->Signal(lockP);
+        lockP->Release();
+
+        mutex->Release();
+        kernel->currentThread->Yield();
+    }
+}
+
+void Thread::ProducerConsumerTest1() {
+
+    Thread* producerThread = new Thread("producer");
+    Thread* consumerThread = new Thread("consumer");
+
+    producerThread->Fork(producer, (void*)1);
+    consumerThread->Fork(consumer, (void*)2);
+}
+

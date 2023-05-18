@@ -110,6 +110,7 @@ class Thread {
     void SelfTest1();  // normal version
     void SelfTest2();  // test whether max_thread is set to 128
     void SelfTest3();  // switch to scheduler based on input priorty
+    void ProducerConsumerTest1();
 
   private:
     // some of the private data for this class is listed above

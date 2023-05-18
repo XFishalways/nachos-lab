@@ -1,6 +1,6 @@
 # nachos-lab
 
-Nachos lab course by SCU.
+NachOS lab by SCU.
 
 ## Direction
 

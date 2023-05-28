@@ -65,6 +65,7 @@ SwapHeader (NoffHeader *noffH)
 //	only uniprogramming, and we have a single unsegmented page table
 //----------------------------------------------------------------------
 
+// 每个进程维护一个地址空间 每个地址空间维护一个页表
 AddrSpace::AddrSpace()
 {
     pageTable = new TranslationEntry[NumPhysPages];
@@ -78,6 +79,7 @@ AddrSpace::AddrSpace()
     }
     
     // zero out the entire address space
+    // 直接映射 单用户单进程
     bzero(kernel->machine->mainMemory, MemorySize);
 }
 
@@ -102,6 +104,7 @@ AddrSpace::~AddrSpace()
 //	"fileName" is the file containing the object code to load into memory
 //----------------------------------------------------------------------
 
+// 将用户程序加载到内存中
 bool 
 AddrSpace::Load(char *fileName) 
 {

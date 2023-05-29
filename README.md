@@ -1,14 +1,15 @@
-# lab 9
+# lab 10
 
 ## Goal
 
-利用Lock与Condition实现一个生产者-消费者问题，要求如下：
-1. 创建线程时，利用fork第二个参数作为线程的编号；
-2. 共有两个线程，一个生产者线程，一个消费者线程；
-3. 两个线程共享一个cache；
-4. 按照生产者消费者的流程打印出结果；
+1.	在Nachos现有页表的基础上，增加TLB快表机制，使得在做虚拟地址到物理地址的转换时，优先从TLB快表中读取；
+2.	针对TLB增加NRU置换算法
 
 ## Code Modification
 
-- threads/thread.h && thread.cc
-- threads/kernel.cc
+- userprog/exception.cc
+- machine/machine.cc
+- machine/mipssim.cc
+- machine.translate.cc
+- test/sort.cc
+- build.linux/Makefile

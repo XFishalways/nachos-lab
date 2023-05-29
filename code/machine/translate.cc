@@ -92,10 +92,24 @@ Machine::ReadMem(int addr, int size, int *value)
     DEBUG(dbgAddr, "Reading VA " << addr << ", size " << size);
     
     exception = Translate(addr, &physicalAddress, size, FALSE);
-    if (exception != NoException) {
-	RaiseException(exception, addr);
-	return FALSE;
-    }
+    // if (exception != NoException) {
+	// RaiseException(exception, addr);
+	// return FALSE;
+    // }
+
+	// 
+	if (exception != NoException) {
+		RaiseException(exception, addr);
+		if (exception == PageFaultException) {
+			exception = Translate(addr, &physicalAddress, size, FALSE);
+			if (exception != NoException) {
+				return FALSE;
+			}
+		} else {
+			return FALSE;
+		}
+	}
+
     switch (size) {
       case 1:
 	data = mainMemory[physicalAddress];
@@ -199,8 +213,8 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
     }
     
     // we must have either a TLB or a page table, but not both!
-	// 此处需要修改！！！！
-    ASSERT(tlb == NULL || pageTable == NULL);	
+	// 可以同时存在
+    // ASSERT(tlb == NULL || pageTable == NULL);	
     ASSERT(tlb != NULL || pageTable != NULL);	
 
 // calculate the virtual page number, and offset within the page,

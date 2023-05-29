@@ -63,8 +63,23 @@ Machine::Run()
 	cout << ", at time: " << kernel->stats->totalTicks << "\n";
     }
     kernel->interrupt->setStatus(UserMode);
+	int co = 0;
     for (;;) {
         OneInstruction(instr);
+
+		if (co == 99) {
+			cout << "set to 0\n";
+			for (int i = 0; i < TLBSize; ++i) {
+				kernel->machine->tlb[i].use = false;
+			} 
+			for (int i = 0; i < TLBSize; ++i) {
+				cout << i << "is set to " << tlb[i].use;
+			} 
+			co = (co+1) % 100;
+
+			kernel->interrupt->OneTick();
+			if (singleStep && (runUntilTime <= kernel->stats->totalTicks)) Debugger();
+		}
 	kernel->interrupt->OneTick();
 	if (singleStep && (runUntilTime <= kernel->stats->totalTicks))
 	  Debugger();

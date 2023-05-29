@@ -20,7 +20,7 @@
 #include "syscall.h"
 #endif /* UNIX */
 
-#define SIZE (1024)
+#define SIZE (8)
 
 int A[SIZE];	/* size of physical memory; with code, we'll run out of space!*/
 
@@ -61,9 +61,9 @@ main()
 
     for (i=0; i<SIZE; i++) {
         if (A[i] != i) {
-            Exit(1);
+            Halt(1);
         }   
     }
 
-    Exit(0);
+    Halt(0);
 }

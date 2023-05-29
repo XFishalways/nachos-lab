@@ -25,6 +25,9 @@
 #include "main.h"
 #include "syscall.h"
 #include "ksyscall.h"
+
+void SimpleTLBMissHandler(int virtAddr);
+void TLBMissHandler(int virtAddr);
 //----------------------------------------------------------------------
 // ExceptionHandler
 // 	Entry point into the Nachos kernel.  Called when a user program
@@ -56,6 +59,12 @@ ExceptionHandler(ExceptionType which)
     DEBUG(dbgSys, "Received Exception " << which << " type: " << type << "\n");
 
     switch (which) {
+	case PageFaultException:
+		#ifdef USE_TLB
+			// SimpleTLBMissHandler(kernel->machine->ReadRegister(BadVAddrReg));
+			TLBMissHandler(kernel->machine->ReadRegister(BadVAddrReg));
+		#endif
+		
     case SyscallException:
       switch(type) {
       case SC_Halt:
@@ -196,5 +205,53 @@ ExceptionHandler(ExceptionType which)
       cerr << "Unexpected user mode exception" << (int)which << "\n";
       break;
     }
-    ASSERTNOTREACHED();
+    // ASSERTNOTREACHED();
+}
+
+
+int pointer = 0;
+void SimpleTLBMissHandler(int virtAddr) 
+{
+	unsigned int vpn;
+	vpn = (unsigned)virtAddr / PageSize;
+	DEBUG('a', "\n>>>>>>>add page number " << vpn << " to tlb pointer " << kernel->machine->tlb->virtualPage << " : " << kernel->machine->tlb->physicalPage);
+	kernel->machine->tlb[pointer] = kernel->machine->pageTable[vpn];
+	DEBUG('a', ">>>>>>>>This is the current tlb table pointer 0: " << kernel->machine->tlb->virtualPage << " : " << kernel->machine->tlb->physicalPage);
+	pointer = pointer ? 0 : 1;
+}
+
+void TLBMissHandler(int virtAddr) 
+{
+	unsigned int vpn;
+	vpn = (unsigned)virtAddr / PageSize;
+	int clockpoint = -1;
+
+	while (clockpoint == -1) {
+		DEBUG('a', "tlb NRU started\n");
+		cout << "tlb NRU started\n";
+		for (int i = 0; i < TLBSize; ++i) {
+			if (!kernel->machine->tlb[i].use && !kernel->machine->tlb[i].dirty) {
+				clockpoint = i;
+				break;
+			}
+		}
+
+		if (clockpoint == -1) {
+			for (int i = 0; i < TLBSize; ++i) {
+				if (!kernel->machine->tlb[i].use && !kernel->machine->tlb[i].dirty) {
+					clockpoint = i;
+					break;
+				} else {
+					kernel->machine->tlb[i].use = false;
+				}
+			}
+		}
+	}
+
+	cout << "(1) TLB before replacement:\n";
+	for (int i = 0; i < TLBSize; ++i) {
+		cout << "tlb[" << i << "] use : " << kernel->machine->tlb[i].use;
+	}
+	cout << "(2) tlb" << clockpoint << "has been changed";
+	cout << vpn;
 }

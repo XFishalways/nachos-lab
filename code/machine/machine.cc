@@ -52,7 +52,23 @@ void CheckEndian()
 //		is executed.
 //----------------------------------------------------------------------
 
-x
+Machine::Machine(bool debug)
+{
+    int i;
+    for (i = 0; i < NumTotalRegs; i++)
+        registers[i] = 0;
+    mainMemory = new char[MemorySize];
+    for (i = 0; i < MemorySize; i++)
+      	mainMemory[i] = 0;
+#ifdef USE_TLB // 条件编译 如果USE_TLB这个宏定义过就对这里进行编译
+    tlb = new TranslationEntry[TLBSize];
+    for (i = 0; i < TLBSize; i++)
+	tlb[i].valid = FALSE;
+    pageTable = NULL;
+#else	// use linear page table
+    tlb = NULL;
+    pageTable = NULL;
+#endif
     singleStep = debug;
     CheckEndian();
 }

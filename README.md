@@ -20,3 +20,4 @@ Check out the branches to enter each lab.
 - lab7 -> system call 系统调用 (mul, div, pow)
 - lab8 -> Thread module 线程模块升级 (add IDs, schedule based on priorty )
 - lab9 -> lock & condition 同步与互斥 (producer vs. consumer)
+- lab10 -> memory manegement upgrade 内存管理 (TLB & NRU)

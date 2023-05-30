@@ -1,9 +1,10 @@
-# lab 10
+# lab 11
 
 ## Goal
 
-1.	在Nachos现有页表的基础上，增加TLB快表机制，使得在做虚拟地址到物理地址的转换时，优先从TLB快表中读取；
-2.	针对TLB增加NRU置换算法
+1.	实现用户程序中的以下文件系统调用，从而支持NachOS的用户程序中的文件创建、打开、读出、写入、关闭操作: create(), open(), read(), write(), close()
+2.	实现支持NachOS Shell的以下系统调用，从而支持NachOS的用户程序中的shell命令执行: exec(), join()
+
 
 ## Code Modification
 

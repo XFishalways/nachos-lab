@@ -10,7 +10,7 @@ int main() {
     Create(file1);
     Create(file2);
     fileId1 = Open(file1);
-    Write(buffer, 15, fileId1);
+    Write(buffer, 12, fileId1);
     Close(fileId1);
     Remove(file2);
 }

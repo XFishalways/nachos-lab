@@ -305,6 +305,8 @@ ExceptionHandler(ExceptionType which)
 		wcount++;
 	} while (*(char*) &wvalue != '\0' && wcount < wsize);
 
+	wparamStr[wsize] = '\0';
+
 	/* Prepare Result */
 	wcount = SysWrite(wparamStr, wsize, wfileId);
 	if (wcount > -1) {
@@ -457,11 +459,12 @@ ExceptionHandler(ExceptionType which)
 	DEBUG(dbgSys, "Exec" << kernel->machine->ReadRegister(4) << "\n");
 	
 	/* Process SysExec Systemcall*/
-	result = SysExec((int)kernel->machine->ReadRegister(4));
-	DEBUG(dbgSys, "Exec returning with " << result << "\n");
+	int resultExec;
+	resultExec = SysExec((int)kernel->machine->ReadRegister(4));
+	DEBUG(dbgSys, "Exec returning with " << resultExec << "\n");
 
 	/* Prepare Result */
-	kernel->machine->WriteRegister(2, result);
+	kernel->machine->WriteRegister(2, resultExec);
 	/* Modify return point */
 	{
 	  /* set previous programm counter (debugging only)*/
@@ -486,12 +489,13 @@ ExceptionHandler(ExceptionType which)
 	DEBUG(dbgSys, "Join" << kernel->machine->ReadRegister(4) << "\n");
 	
 	/* Process SysJoin Systemcall*/
-	result = SysJoin((int)kernel->machine->ReadRegister(4));
-	DEBUG(dbgSys, "Join returning with " << result << "\n");
+	int resultJoin;
+	resultJoin = SysJoin((int)kernel->machine->ReadRegister(4));
+	DEBUG(dbgSys, "Join returning with " << resultJoin << "\n");
 
 
 	/* Prepare Result */
-	kernel->machine->WriteRegister(2, result);
+	kernel->machine->WriteRegister(2, resultJoin);
 	/* Modify return point */
 	{
 	  /* set previous programm counter (debugging only)*/

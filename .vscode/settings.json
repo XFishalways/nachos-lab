@@ -4,6 +4,9 @@
         "string": "cpp",
         "typeinfo": "cpp",
         "string_view": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "ostream": "c",
+        "numeric": "c",
+        "sstream": "c"
     }
 }

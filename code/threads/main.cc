@@ -45,7 +45,11 @@
 #include "filesys.h"
 #include "openfile.h"
 #include "sysdep.h"
+#include "kernel.h"
 
+// #ifdef FILESYS_STUB
+// #undef FILESYS_STUB
+// #endif 
 #ifdef TUT
 
 #include "tut.h"
@@ -57,11 +61,15 @@ namespace tut
 }
 
 #endif TUT
+#ifdef USER_PROGRAM
+Machine *machine;
+Bitmap *memoryBitMap;
+#endif
+
 
 // global variables
 Kernel *kernel;
 Debug *debug;
-
 
 //----------------------------------------------------------------------
 // Cleanup
@@ -88,7 +96,6 @@ static const int TransferSize = 128;
 // Copy
 //      Copy the contents of the UNIX file "from" to the Nachos file "to"
 //----------------------------------------------------------------------
-
 static void
 Copy(char *from, char *to)
 {
@@ -110,11 +117,11 @@ Copy(char *from, char *to)
 
 // Create a Nachos file of the same length
     DEBUG('f', "Copying file " << from << " of size " << fileLength <<  " to file " << to);
-    if (!kernel->fileSystem->Create(to, fileLength)) {   // Create Nachos file
-        printf("Copy: couldn't create output file %s\n", to);
-        Close(fd);
-        return;
-    }
+    // if (!kernel->fileSystem->Create(to, fileLength)) {   // Create Nachos file
+    //     printf("Copy: couldn't create output file %s\n", to);
+    //     Close(fd);
+    //     return;
+    // }
     
     openFile = kernel->fileSystem->Open(to);
     ASSERT(openFile != NULL);
@@ -187,7 +194,6 @@ main(int argc, char **argv)
 #ifndef FILESYS_STUB
     char *copyUnixFileName = NULL;    // UNIX file to be copied into Nachos
     char *copyNachosFileName = NULL;  // name of copied file in Nachos
-    char *printFileName = NULL; 
     char *removeFileName = NULL;
     bool dirListFlag = false;
     bool dumpFlag = false;
@@ -220,7 +226,7 @@ main(int argc, char **argv)
 	    networkTestFlag = TRUE;
 	}
 #ifndef FILESYS_STUB
-	else if (strcmp(argv[i], "-cp") == 0) {
+    else if (strcmp(argv[i], "-cp") == 0) {
 	    ASSERT(i + 2 < argc);
 	    copyUnixFileName = argv[i + 1];
 	    copyNachosFileName = argv[i + 2];
@@ -228,7 +234,6 @@ main(int argc, char **argv)
 	}
 	else if (strcmp(argv[i], "-p") == 0) {
 	    ASSERT(i + 1 < argc);
-	    printFileName = argv[i + 1];
 	    i++;
 	}
 	else if (strcmp(argv[i], "-r") == 0) {
@@ -265,10 +270,6 @@ main(int argc, char **argv)
     ::tut::runner.get().run_tests(); //run all unit tests
 #endif 
     
-    int count;
-    for(count=0;count<128;count++)
-    	threadId[count]=0;
-    
     kernel = new Kernel(argc, argv);
 
     kernel->Initialize();
@@ -300,13 +301,10 @@ main(int argc, char **argv)
     if (dirListFlag) {
       kernel->fileSystem->List();
     }
-    if (printFileName != NULL) {
-      Print(printFileName);
-    }
 #endif // FILESYS_STUB
 
     // finally, run an initial user program if requested to do so
-    if (userProgName != NULL) {
+    if (userProgName != NULL) {  
       AddrSpace *space = new AddrSpace;
       ASSERT(space != (AddrSpace *)NULL);
       if (space->Load(userProgName)) {  // load the program into the space

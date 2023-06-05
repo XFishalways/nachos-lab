@@ -23,7 +23,8 @@
 #include "copyright.h"
 #include "utility.h"
 #include "sysdep.h"
-
+//#include "main.h"
+//#include "filesys.h"
 #ifdef FILESYS_STUB			// Temporarily implement calls to 
 					// Nachos file system as calls to UNIX!
 					// See definitions listed under #else
@@ -33,8 +34,8 @@ class OpenFile {
     ~OpenFile() { Close(file); }			// close the file
 
     int ReadAt(char *into, int numBytes, int position) { 
-    		Lseek(file, position, 0); 
-		return ReadPartial(file, into, numBytes); 
+        Lseek(file, position, 0); 
+        return ReadPartial(file, into, numBytes); 
 		}	
     int WriteAt(char *from, int numBytes, int position) { 
     		Lseek(file, position, 0); 
@@ -86,7 +87,7 @@ class OpenFile {
 					// file (this interface is simpler 
 					// than the UNIX idiom -- lseek to 
 					// end of file, tell, lseek back 
-	void selfTest();
+    
   private:
     FileHeader *hdr;			// Header for this file 
     int seekPosition;			// Current position within the file

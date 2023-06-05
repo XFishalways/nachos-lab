@@ -24,23 +24,6 @@
 #include "filehdr.h"
 #include "directory.h"
 
-Directory::Directory()
-{
-    tableSize = 10; //NumDirEntries
-    table = new DirectoryEntry[tableSize];
-    
-    for (int i = 0; i < tableSize; i++)
-	table[i].inUse = FALSE;
-}
-
-Directory::Directory(int sector, int size)
-{
-    this->sector = sector;
-    tableSize = size;
-    table = new DirectoryEntry[tableSize];
-    for (int i = 0; i < tableSize; i++)
-	table[i].inUse = FALSE;
-}
 //----------------------------------------------------------------------
 // Directory::Directory
 // 	Initialize a directory; initially, the directory is completely
@@ -79,9 +62,7 @@ Directory::~Directory()
 void
 Directory::FetchFrom(OpenFile *file)
 {
-    
-    (void) file->ReadAt((char *)&sector, sizeof(int), 0);
-    (void) file->ReadAt((char *)table, tableSize * sizeof(DirectoryEntry), sizeof(int));
+    (void) file->ReadAt((char *)table, tableSize * sizeof(DirectoryEntry), 0);
 }
 
 //----------------------------------------------------------------------
@@ -94,8 +75,7 @@ Directory::FetchFrom(OpenFile *file)
 void
 Directory::WriteBack(OpenFile *file)
 {
-    (void) file->WriteAt((char *)&sector, sizeof(int), 0);
-    (void) file->WriteAt((char *)table, tableSize * sizeof(DirectoryEntry), sizeof(int));
+    (void) file->WriteAt((char *)table, tableSize * sizeof(DirectoryEntry), 0);
 }
 
 //----------------------------------------------------------------------
@@ -110,106 +90,11 @@ int
 Directory::FindIndex(char *name)
 {
     for (int i = 0; i < tableSize; i++)
-        if (table[i].inUse && !strncmp(table[i].name, name, FileNameMaxLen))
+        if (table[i].inUse && !strcmp(table[i].name, name))
 	    return i;
     return -1;		// name not in directory
 }
 
-//在当前目录中查找name，如果找到返回其fileHeader扇区号，否则返回-1
-int
-Directory::dirlookup(char* name)
-{
-    int k = FindIndex(name);
-
-    if (k != -1)
-    {
-        return table[k].sector;
-    }
-    return -1;
-}
-
-// 源自XV6
-// Copy the next path element from path into name.
-// Return a pointer to the element following the copied one.
-// The returned path has no leading slashes,
-// so the caller can check *path=='\0' to see if the name is the last one.
-// If no name to remove, return 0.
-//
-// Examples:
-//   skipelem("a/bb/c", name) = "bb/c", setting name = "a"
-//   skipelem("///a//bb", name) = "bb", setting name = "a"
-//   skipelem("a", name) = "", setting name = "a"
-//   skipelem("", name) = skipelem("////", name) = 0
-char*
-Directory::skipelem(char* path, char* name)
-{
-    char *s;
-    int len;
-
-    //跳过开头的‘/’
-    while(*path == '/')
-        path++;
-    if(*path == 0)
-        return 0;
-    s = path;
-    //找下一个'/',两个'/'之间为一层目录
-    while(*path != '/' && *path != 0)
-        path++;
-    len = path - s;
-    if(len >= FileNameMaxLen)
-        memmove(name, s, FileNameMaxLen);
-    else 
-    {
-        memmove(name, s, len);
-        name[len] = 0;
-    }
-    while(*path == '/')
-        path++;
-    return path;
-}
-
-
-// 从当前目录开始，递归查找文件name
-// 如果查找成功，返回其fileHeader sectornum，否则返回-1
-// 如果nameparent == 1,返回name所在目录的fileHeader sectorNum
-int
-Directory::namex(char* path, int nameparent, char* name)
-{
-    int next;
-
-    path = skipelem(path, name);
-    //递归基，相当于在当前目录中查找一个普通文件
-    if (*path == '\0')
-    {
-        if (nameparent) return sector;
-        else 
-            return dirlookup(name);
-    }
-
-    if ((next = dirlookup(name)) == -1)
-    {
-        return -1;
-    }
-
-    FileHeader* hdr = new FileHeader;
-    hdr->FetchFrom(next);
-    if (hdr->getFileType() != TYPE_DIR)
-    {
-        delete hdr;
-        return -1;
-    }
-    delete hdr;
-
-    OpenFile* nextDirOpenFile = new OpenFile(next);
-    Directory* nextDir = new Directory();
-    nextDir->FetchFrom(nextDirOpenFile);
-    // nextDir->setSector(next);
-    delete nextDirOpenFile;
-
-    int res =  nextDir->namex(path, nameparent, name);
-    delete nextDir;
-    return res;
-}
 //----------------------------------------------------------------------
 // Directory::Find
 // 	Look up file name in directory, and return the disk sector number
@@ -220,10 +105,16 @@ Directory::namex(char* path, int nameparent, char* name)
 //----------------------------------------------------------------------
 
 int
-Directory::Find(char *path)
+Directory::Find(char *name)
 {
-    char name[FileNameMaxLen];
-    return namex(path, 0, name);
+    int i = FindIndex(name);
+
+    if (i != -1)
+    {
+        
+	return table[i].sector;
+    }
+    return -1;
 }
 
 //----------------------------------------------------------------------
@@ -236,45 +127,31 @@ Directory::Find(char *path)
 //	"name" -- the name of the file being added
 //	"newSector" -- the disk sector containing the added file's header
 //----------------------------------------------------------------------
+
 bool
-Directory::AddInCurrentDir(char* name, int newSector)
-{
+Directory::Add(char *name, int newSector)
+{ 
     if (FindIndex(name) != -1)
-        return FALSE;
-
+	return FALSE;
+    int fml=strlen(name);int point;
     for (int i = 0; i < tableSize; i++)
-    if (!table[i].inUse) 
-    {
-        table[i].inUse = TRUE;
-        strncpy(table[i].name, name, FileNameMaxLen);
-        table[i].sector = newSector;
+        if (!table[i].inUse) {
+            table[i].inUse = TRUE;
+            table[i].name=(char*)malloc(fml*sizeof(char));
+            strncpy(table[i].name, name, fml); 
+            for(int j=fml-1;j>=0;j--)
+            {
+                if(name[j]=='.')
+                {
+                    point=j;
+                }
+            }
+            table[i].type=(char*)malloc((fml-point)*sizeof(char));
+            strncpy(table[i].type,name+point,fml+1-point);
+            table[i].sector = newSector;
         return TRUE;
-    }
-    //TODO:increase
-    return FALSE;
-}
-
-bool
-Directory::Add(char *path, int newSector)
-{
-    char name[FileNameMaxLen];
-    int psector = namex(path, 1, name);
-    
-    // cout << "psector : " << psector << endl; 
-    if (psector == -1)
-        return FALSE;
-    Directory* pdir = new Directory();
-    OpenFile* pfile = new OpenFile(psector);
-    pdir->FetchFrom(pfile);
-    
-    int res = pdir->AddInCurrentDir(name, newSector);
-    if (res)
-    {
-        pdir->WriteBack(pfile);
-    }
-    delete pfile;
-    delete pdir;
-    return res;
+	}
+    return FALSE;	// no space.  Fix when we have extensible files.
 }
 
 //----------------------------------------------------------------------
@@ -284,36 +161,16 @@ Directory::Add(char *path, int newSector)
 //
 //	"name" -- the file name to be removed
 //----------------------------------------------------------------------
-bool
-Directory::RemoveInCurrentDir(char* name)
-{
-    int index = FindIndex(name);
-    if (index == -1)return FALSE;
-    table[index].inUse = FALSE;
-    return TRUE;
-}
-
 
 bool
-Directory::Remove(char *path)
+Directory::Remove(char *name)
 { 
-    char name[FileNameMaxLen];
-    int psector = namex(path, 1, name);
-    if (psector == -1)
-        return FALSE;
-    
-    Directory* pdir = new Directory();
-    OpenFile* pfile = new OpenFile(psector);
-    pdir->FetchFrom(pfile);
+    int i = FindIndex(name);
 
-    int res = pdir->RemoveInCurrentDir(name);
-    if (res)
-    {
-        pdir->WriteBack(pfile);
-    }
-    delete pfile;
-    delete pdir;
-    return res;
+    if (i == -1)
+	return FALSE; 		// name not in directory
+    table[i].inUse = FALSE;
+    return TRUE;	
 }
 
 //----------------------------------------------------------------------
@@ -346,23 +203,7 @@ Directory::Print()
 	    printf("Name: %s, Sector: %d\n", table[i].name, table[i].sector);
 	    hdr->FetchFrom(table[i].sector);
 	    hdr->Print();
-        if (hdr->getFileType() == TYPE_DIR)
-        {
-            Directory* subdir = new Directory();
-            OpenFile* subdirfile = new OpenFile(table[i].sector);
-            subdir->FetchFrom(subdirfile);
-            subdir->Print();
-            delete subdir;
-            delete subdirfile;
-        }
 	}
     printf("\n");
     delete hdr;
-}
-
-void
-Directory::selfTest()
-{
-    
-
 }

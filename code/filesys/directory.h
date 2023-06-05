@@ -33,9 +33,10 @@ class DirectoryEntry {
   public:
     bool inUse;				// Is this directory entry in use?
     int sector;				// Location on disk to find the 
-					//   FileHeader for this file 
-    char name[FileNameMaxLen + 1];	// Text name for file, with +1 for 
+					//   FileHeader for this file 对呀文件头的位置
+    //char name[FileNameMaxLen + 1];	// Text name for file, with +1 for 
 					// the trailing '\0'
+    char *name;char *type;char *road;
 };
 
 // The following class defines a UNIX-like "directory".  Each entry in
@@ -50,13 +51,12 @@ class DirectoryEntry {
 
 class Directory {
   public:
-    Directory();
-    Directory(int sector, int size);
     Directory(int size); 		// Initialize an empty directory
 					// with space for "size" files
     ~Directory();			// De-allocate the directory
 
-    void FetchFrom(OpenFile *file);  	// Init directory contents from disk
+    void FetchFrom(OpenFile *file);  	
+    // Init directory contents from disk 从目录文件中读入目录结构
     void WriteBack(OpenFile *file);	// Write modifications to 
 					// directory contents back to disk
 
@@ -72,24 +72,14 @@ class Directory {
     void Print();			// Verbose print of the contents
 					//  of the directory -- all the file
 					//  names and their contents.
-    void setSector(int sector) {this->sector = sector;}
-    int getSector() {return sector;}
-
-    static void selfTest();
 
   private:
-    int tableSize;			// Number of directory entries
-    DirectoryEntry *table;		// Table of pairs: 
-					// <file name, file header location>
-    int sector;
-
+    int tableSize;			// Number of directory entries 目录项数量
+    DirectoryEntry *table;		// Table of pairs:  目录项表
+					// <file name, file header location> 
+    
     int FindIndex(char *name);		// Find the index into the directory 
 					//  table corresponding to "name"
-    int namex(char* path, int nameparent, char* name);
-    char* skipelem(char* path, char* name);
-    int dirlookup(char* name);
-    bool AddInCurrentDir(char* name, int newSector);
-    bool RemoveInCurrentDir(char* name);
 };
 
 #endif // DIRECTORY_H

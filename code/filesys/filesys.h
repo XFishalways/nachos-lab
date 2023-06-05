@@ -36,14 +36,12 @@
 #include "copyright.h"
 #include "sysdep.h"
 #include "openfile.h"
-#include "filehdr.h"
-
 #ifdef FILESYS_STUB 		// Temporarily implement file system calls as 
 				// calls to UNIX, until the real file system
 				// implementation is available
 class FileSystem {
   public:
-    FileSystem() {}
+    FileSystem(){}
 
     bool Create(char *name) {
 	int fileDescriptor = OpenForWrite(name);
@@ -67,33 +65,29 @@ class FileSystem {
 #else // FILESYS
 class FileSystem {
   public:
-    FileSystem(bool format);		// Initialize the file system.
+  	FileSystem(){}
+    FileSystem( bool format);		// Initialize the file system.
 					// Must be called *after* "synchDisk" 
 					// has been initialized.
     					// If "format", there is nothing on
 					// the disk, so initialize the directory
     					// and the bitmap of free blocks.
 
-    bool Create(char *name, FileType filetype);  	
+    bool Create(char *name, int initialSize);  	
 					// Create a file (UNIX creat)
 
     OpenFile* Open(char *name); 	// Open a file (UNIX open)
 
     bool Remove(char *name);  		// Delete a file (UNIX unlink)
 
-	bool Close(char* name);
-
-	int ReadPipe(char* data);
-	void WritePipe(char* data, int length);
     void List();			// List all the files in the file system
 
     void Print();			// List all the files and their contents
 
-	void selfTest();
   private:
-	OpenFile* freeMapFile;		// Bit map of free disk blocks,
+   OpenFile* freeMapFile;		// Bit map of free disk blocks,
 					// represented as a file
-	OpenFile* directoryFile;		// "Root" directory -- list of 
+   OpenFile* directoryFile;		// "Root" directory -- list of 
 					// file names, represented as a file
 };
 

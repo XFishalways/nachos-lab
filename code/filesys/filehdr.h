@@ -17,17 +17,8 @@
 #include "disk.h"
 #include "pbitmap.h"
 
-#define NumDirect 	((SectorSize - 8 * sizeof(int)) / sizeof(int))
-#define NumInDirect (SectorSize / sizeof(int))
-#define MaxFileSize 	((NumDirect + NumInDirect) * SectorSize)
-
-typedef enum
-{
-	TYPE_FILE,
-	TYPE_DIR,
-	TYPE_PIPE,
-  TYPE_UNKNOWN
-}FileType;
+#define NumDirect 	((SectorSize - 2 * sizeof(int)) / sizeof(int))
+#define MaxFileSize 	(NumDirect * SectorSize)
 
 // The following class defines the Nachos "file header" (in UNIX terms,  
 // the "i-node"), describing where on disk to find all of the data in the file.
@@ -44,10 +35,8 @@ typedef enum
 // by allocating blocks for the file (if it is a new file), or by
 // reading it from disk.
 
-class FileHeader {
+class FileHeader {//i节点
   public:
-    FileHeader();
-    FileHeader(int selfsector, FileType type);
     bool Allocate(PersistentBitmap *bitMap, int fileSize);// Initialize a file header, 
 						//  including allocating space 
 						//  on disk for the file data
@@ -55,42 +44,33 @@ class FileHeader {
 						//  data blocks
 
     void FetchFrom(int sectorNumber); 	// Initialize file header from disk
+    //从磁盘扇区中取出文件头，FetchFrom为将数据结构从磁盘读到内存的函数
     void WriteBack(int sectorNumber); 	// Write modifications to file header
 					//  back to disk
-
+//将文件头写入磁盘扇区
     int ByteToSector(int offset);	// Convert a byte offset into the file
 					// to the disk sector containing
-					// the byte
+					// the byte 文件逻辑地址向物理地址转换
 
-    int FileLimit();
-    int FileCapacity();
-    bool setFileLimit(int position);
-
-    void setSelfSector(int sector) {selfSector = sector;}
-    int getSelfSector() {return selfSector;}
-
-    void setFileType(FileType type) {this->type = type;}
-    FileType getFileType() {return type;}
-
+    int FileLength();			// Return the length of the file 
+					// in bytes 返回文件长度
 
     void Print();			// Print the contents of the file.
-
-    void selfTest(PersistentBitmap *freeMap);
-
+    
+    void setChangeTime();
+    void setVisitTime(int vector);
+    void setCreateTime();
   private:
-    int limit;			// Number of bytes in the file
-    int capacity;
-    int nsectors;			// Number of data sectors in the file
-    int selfSector;
-    // TODO:
-    // int nlink;
+    int numBytes;			// Number of bytes in the file 文件大小
+    int numSectors;		// Number of data sectors in the file 占用扇区数
+    int dataSectors[NumDirect];		// Disk sector numbers for each data 
+					// block in the file 文件索引表
+    //实验扩展文件属性（创建日期），间接索引扩充文件长度
 
-    FileType type;
+    char createTime[25];
+    char lastVisitTime[25];
+    char lastChangeTime[25];
     
-    int createTime;
-    int modifyTime;
-    
-    int dataSectors[NumDirect+1];	 //直接索引+1个间接索引
 };
 
 #endif // FILEHDR_H

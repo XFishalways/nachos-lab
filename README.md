@@ -7,9 +7,8 @@
 
 ## Code Modification
 
-- userprog/exception.cc
-- machine/machine.cc
-- machine/mipssim.cc
-- machine.translate.cc
-- test/sort.cc
+- filesys/filehdr.cc & filehdr.h
+- filesys/filesys.cc
 - build.linux/Makefile
+- filesys/test.c
+- filesys/lab12_5k.txt

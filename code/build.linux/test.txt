@@ -1,1 +1,0 @@
-dd if=/dev/zero of=lab12_5k count=5 bs=1024

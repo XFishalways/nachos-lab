@@ -1,10 +1,9 @@
-# lab 11
+# lab 12
 
 ## Goal
 
-1.	实现用户程序中的以下文件系统调用，从而支持NachOS的用户程序中的文件创建、打开、读出、写入、关闭操作: create(), open(), read(), write(), close()
-2.	实现支持NachOS Shell的以下系统调用，从而支持NachOS的用户程序中的shell命令执行: exec(), join()
-
+1.	能够显示文件除了文件名的属性（文件类型、最后访问时间）
+2.	更改Nachos中文件空间分配机制，添加索引，使其能够支持超过4KB的文件
 
 ## Code Modification
 

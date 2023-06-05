@@ -151,6 +151,12 @@ FileHeader::Print()
     char *data = new char[SectorSize];
 
     printf("FileHeader contents.  File size: %d.  File blocks:\n", numBytes);
+    
+    printf("type: %s\n", type);
+    printf("create time: %s\n", createTime);
+    printf("change time: %s", lastChangeTime);
+    printf("last visit time: %s\n", lastVisitTime);
+    
     for (i = 0; i < numSectors; i++)
 	printf("%d ", dataSectors[i]);
     printf("\nFile contents:\n");
@@ -183,7 +189,7 @@ FileHeader::setChangeTime()
     time(&timefile);
     strncpy(lastChangeTime,asctime(gmtime(&timefile)),25);
     lastChangeTime[24]='\0';
-    printf("change file at%s\n",lastChangeTime);
+    printf("change file at %s\n",lastChangeTime);
 }
 
 void
@@ -193,5 +199,5 @@ FileHeader::setVisitTime(int sector)
     time(&timefile);
     strncpy(lastVisitTime,asctime(gmtime(&timefile)),25);
     lastVisitTime[24]='\0';
-    printf("visit file:%d at%s\n", sector, lastVisitTime);
+    printf("file %d last visit at %s\n", sector, lastVisitTime);
 }

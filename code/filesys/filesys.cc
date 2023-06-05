@@ -183,6 +183,10 @@ FileSystem::Create(char *name, int initialSize)
     int sector;
     bool success;
 
+    int dosPosition;
+    int count;
+    int position;
+
     DEBUG(dbgFile, "Creating file " << name << " size " << initialSize);
 
     directory = new Directory(NumDirEntries);
@@ -203,6 +207,20 @@ FileSystem::Create(char *name, int initialSize)
             	success = FALSE;	// no space on disk for data
 	    else {	
 	    	success = TRUE;
+            memset(hdr->type, 0, 4);
+            dosPosition = 0;
+            for(count=0; count < strlen(name); count++) {
+                if ('.' == name[count]) {
+                    dosPosition = count;
+                    break;
+                }
+            }
+            position = 0;
+            for(count = dosPosition+1; count<strlen(name); count++) {
+                hdr->type[position] = name[count];
+                position++;
+            }
+            hdr->type[position] = '\0';
             hdr->setCreateTime();
             hdr->setVisitTime(sector);
             hdr->setChangeTime();
@@ -240,8 +258,8 @@ FileSystem::Open(char *name)
     DEBUG(dbgFile, "Opening file" << name);
     directory->FetchFrom(directoryFile);
     sector = directory->Find(name); 
-    printf("int sector:%d\n",sector);
-    if (sector >= 0) 		
+    printf("int sector: %d\n",sector);
+    // if (sector >= 0) 		
 	openFile = new OpenFile(sector);	// name was found in directory 
     delete directory;
     return openFile;				// return NULL if not found

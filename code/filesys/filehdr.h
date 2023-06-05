@@ -58,18 +58,18 @@ class FileHeader {//i节点
     void Print();			// Print the contents of the file.
     
     void setChangeTime();
-    void setVisitTime(int vector);
+    void setVisitTime(int sector);
     void setCreateTime();
+
+    char type[4];
+    char createTime[25];
+    char lastVisitTime[25];
+    char lastChangeTime[25];
+
   private:
     int numBytes;			// Number of bytes in the file 文件大小
     int numSectors;		// Number of data sectors in the file 占用扇区数
     int dataSectors[NumDirect];		// Disk sector numbers for each data 
-					// block in the file 文件索引表
-    //实验扩展文件属性（创建日期），间接索引扩充文件长度
-
-    char createTime[25];
-    char lastVisitTime[25];
-    char lastChangeTime[25];
     
 };
 

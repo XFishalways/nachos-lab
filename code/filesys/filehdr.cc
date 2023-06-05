@@ -43,28 +43,31 @@
 bool
 FileHeader::Allocate(PersistentBitmap *freeMap, int fileSize)
 { 
-
-    numBytes = fileSize;
-    numSectors  = divRoundUp(fileSize, SectorSize);
-   
-    //second index
-    if(numSectors<12)
-{
-    if (freeMap->NumClear() < numSectors)
-	return FALSE;		// not enough space
-
-    for (int i = 0; i < numSectors; i++) {
-	dataSectors[i] = freeMap->FindAndSet();
-	// since we checked that there was enough free space,
-	// we expect this to succeed
-	ASSERT(dataSectors[i] >= 0);
+    if(numSectors < NumDirect) {
+        if(freeMap->NumClear() < numSectors) {
+            return FALSE;
+        }
+        for (int i = 0; i < numSectors; i++) {
+            dataSectors[i] = freeMap->FindAndSet();
+            ASSERT(dataSectors[i] >= 0);
+        }
+    } else {
+        if (freeMap->NumClear() < numSectors + 1){
+            return false;
+        }
+        for (int i = 0; i < numSectors; i++) {
+            dataSectors[i] = freeMap->FindAndSet();
+            ASSERT(dataSectors[i] >= 0);
+        }
+        int *indirect = new int[SectorSize / sizeof(int)];
+        for (int i = 0; i < numSectors - NumDirect + 1; i++) {
+            indirect[i] = freeMap->FindAndSet();
+            ASSERT(indirect[i] >= 0);
+        }
+        kernel->synchDisk->WriteSector(dataSectors[NumDirect-1], (char *)this);
     }
-    return TRUE;
-}
-else{
 
-}
-return FALSE;
+    return TRUE;
 }
 
 //----------------------------------------------------------------------
@@ -80,6 +83,25 @@ FileHeader::Deallocate(PersistentBitmap *freeMap)
     for (int i = 0; i < numSectors; i++) {
 	ASSERT(freeMap->Test((int) dataSectors[i]));  // ought to be marked!
 	freeMap->Clear((int) dataSectors[i]);
+    }
+
+    if(numSectors < NumDirect) {
+        for (int i = 0; i < numSectors; i++) {
+            ASSERT(freeMap->Test((int)dataSectors[i]));
+            freeMap->Clear((int)dataSectors[i]);
+        }
+    } else {
+        char *indirect = new char[SectorSize];
+        kernel->synchDisk->ReadSector(dataSectors[NumDirect-1], (char*)this);
+        for (int i = 0; i < numSectors; i++) {
+            ASSERT(freeMap->Test((int)dataSectors[i]));
+            freeMap->Clear((int)dataSectors[i]);
+        }
+        for (int i = 0; i < numSectors - NumDirect + 1; i++) {
+            ASSERT(freeMap->Test((int)indirect[i*4]));
+            freeMap->Clear((int)indirect[i*4]);
+        }
+        delete [] indirect;
     }
 }
 
@@ -124,7 +146,16 @@ FileHeader::WriteBack(int sector)
 int
 FileHeader::ByteToSector(int offset)
 {
-    return(dataSectors[offset / SectorSize]);
+    if(offset < (NumDirect-1) * SectorSize) {
+        return dataSectors[offset / SectorSize];
+    } else {
+        int sector = (offset - (NumDirect - 1) * SectorSize) / SectorSize;
+        char *indirect = new char[SectorSize];
+        kernel->synchDisk->ReadSector(dataSectors[NumDirect-1], (char*)this);
+        int result = indirect[sector * 4];
+        delete [] indirect;
+        return result;
+    }
 }
 
 //----------------------------------------------------------------------
@@ -147,8 +178,45 @@ FileHeader::FileLength()
 void
 FileHeader::Print()
 {
-    int i, j, k;
-    char *data = new char[SectorSize];
+    char *indirect = new char[SectorSize];
+    if(numSectors < NumDirect) {
+        for (int i = 0; i < numSectors; i++) {
+            printf("block %d", i);
+            printf("%d ", dataSectors[i]);
+        }
+    } else {
+        printf("indirect sector: %d\n", dataSectors[NumDirect-1]);
+        for(int i = 0; i < numSectors - NumDirect + 1; i++) {
+            printf("%d ", indirect[i*4]);
+        }
+    }
+    int k;
+    if(numSectors < NumDirect) {
+        for (int i = 0; i < numSectors; i++) {
+            kernel->synchDisk->ReadSector(dataSectors[i], indirect);
+            printf("block %d", i);
+            printf("%d ", dataSectors[i]);
+            for(int j = 0; (j < SectorSize) && (k < numBytes); j++, k++) {
+                if('\040' <= indirect[j] && indirect[j] <= '\176') {
+                    printf("%c", indirect[j]);
+                } else {
+                    printf("\\&x", (unsigned char)indirect[j]);
+                }
+                printf("\n");
+            }
+        }
+    } else {
+        for(int i = k = 0; i < NumDirect - 1; i++) {
+            kernel->synchDisk->ReadSector(dataSectors[i], indirect);
+            for(int j = 0; (j < SectorSize) && (k < numBytes); j++, k++) {
+                if('\040' <= indirect[j] && indirect[j] <= '\176') {
+                    printf("%c", indirect[j]);
+                } else {
+                    printf("\\&x", (unsigned char)indirect[j]);
+                }
+                printf("\n");
+        }
+    }
 
     printf("FileHeader contents.  File size: %d.  File blocks:\n", numBytes);
     
@@ -157,21 +225,23 @@ FileHeader::Print()
     printf("change time: %s", lastChangeTime);
     printf("last visit time: %s\n", lastVisitTime);
     
-    for (i = 0; i < numSectors; i++)
-	printf("%d ", dataSectors[i]);
-    printf("\nFile contents:\n");
-    for (i = k = 0; i < numSectors; i++) {
-	kernel->synchDisk->ReadSector(dataSectors[i], data);
-        for (j = 0; (j < SectorSize) && (k < numBytes); j++, k++) {
-	    if ('\040' <= data[j] && data[j] <= '\176')   // isprint(data[j])
-		printf("%c", data[j]);
-            else
-		printf("\\%x", (unsigned char)data[j]);
-	}
-        printf("\n"); 
+    // for (i = 0; i < numSectors; i++)
+	// printf("%d ", dataSectors[i]);
+    // printf("\nFile contents:\n");
+    // for (i = k = 0; i < numSectors; i++) {
+	// kernel->synchDisk->ReadSector(dataSectors[i], data);
+    //     for (j = 0; (j < SectorSize) && (k < numBytes); j++, k++) {
+	//     if ('\040' <= data[j] && data[j] <= '\176')   // isprint(data[j])
+	// 	printf("%c", data[j]);
+    //         else
+	// 	printf("\\%x", (unsigned char)data[j]);
+	// }
+    //     printf("\n"); 
+    // }
+    // delete [] data;
     }
-    delete [] data;
 }
+
 void
 FileHeader::setCreateTime()
 {

@@ -225,10 +225,10 @@ FileSystem::Create(char *name, int initialSize)
             hdr->setVisitTime(sector);
             hdr->setChangeTime();
 
-		// everthing worked, flush all changes back to disk
-    	    	hdr->WriteBack(sector); 		
-    	    	directory->WriteBack(directoryFile);
-    	    	freeMap->WriteBack(freeMapFile);
+		    // everthing worked, flush all changes back to disk
+    	    hdr->WriteBack(sector); 		
+    	    directory->WriteBack(directoryFile);
+    	    freeMap->WriteBack(freeMapFile);
 	    }
             delete hdr;
 	}

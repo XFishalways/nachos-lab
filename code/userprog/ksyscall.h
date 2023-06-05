@@ -13,6 +13,9 @@
 
 #include "kernel.h"
 #include <sys/wait.h> 
+#include <unistd.h>
+
+
 
 
 
@@ -55,8 +58,7 @@ int SysCreate(char* name) {
 OpenFileId SysOpen(char* name) {
   int fileId;
   fileId = OpenForReadWrite(name, FALSE);
-  if(!fileId) return -1;
-  else return fileId;
+  return fileId == 0 ? -1 : fileId;
 }
 
 int SysWrite(char* buffer, int size, OpenFileId id) {
@@ -100,13 +102,16 @@ int SysExec(int addr) {
   } while (ch != '\0' && count++ < 59);
   cmd[count] = '\0';
 
-  if(cmd != NULL) {
-    AddrSpace* space = new AddrSpace;
-    ASSERT(space != (AddrSpace*)NULL);
-    if (space->Load(cmd)) {
-      space->Execute();
-    }
+  pid_t child;
+  if(child == 0) {
+    execl("/bin/sh", "/bin/sh", "-c", cmd, NULL);
+    _exit(EXIT_FAILURE);
+  } else if(child < 0) {
+    _exit(EXIT_FAILURE);
+    return EPERM;
   }
+  
+  return child;
 }
 
 int SysJoin(int procid) {

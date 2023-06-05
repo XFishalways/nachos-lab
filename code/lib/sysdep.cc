@@ -389,7 +389,7 @@ void
 Lseek(int fd, int offset, int whence)
 {
     int retVal = lseek(fd, offset, whence);
-    ASSERT(retVal >= 0);
+    // ASSERT(retVal >= 0);
 }
 
 //----------------------------------------------------------------------

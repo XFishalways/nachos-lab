@@ -203,17 +203,16 @@ ExceptionHandler(ExceptionType which)
 	int base, value, count;
 	base = kernel->machine->ReadRegister(4);
 	count = 0;
-	char* paramStr;
-	paramStr = new char[128];
-	do {
-		kernel->machine->ReadMem(base + count, 1, &value);
-		paramStr[count] = *(char*) &value;
-		count++;
-	} while (*(char*) &value != '\0' && count < 128);
+	char fbuf[32];
+
+	for(count=0; count<31; count++) {
+		kernel->machine->ReadMem(base+count, 1, &value);
+		fbuf[count] = (char)value;
+	}
 	
 	/* Prepare Result */
 	int CreReturn;
-	CreReturn = SysCreate(paramStr);
+	CreReturn = SysCreate(fbuf);
 	if (CreReturn == -1) {
 		printf("create file failed\n");
 		kernel->machine->WriteRegister(2, -1);
@@ -251,20 +250,21 @@ ExceptionHandler(ExceptionType which)
 
 	int fileid;
 
-	paramStr = new char[128];
+	char obuf[128];
 	do {
 		kernel->machine->ReadMem(base + count, 1, &value);
-		paramStr[count] = *(char*) &value;
+		obuf[count] = *(char*) &value;
 		count++;
 	} while (*(char*) &value != '\0' && count < 128);
 	
 	/* Prepare Result */
-	fileid = SysOpen(paramStr);
-	if (fileid < 1) {
-		printf("failed to open file %s\n", paramStr);
+	fileid = SysOpen(obuf);
+
+	if (fileid == -1) {
+		printf("%s open succeed!\n", obuf);
 		kernel->machine->WriteRegister(2, -1);
 	} else {
-		printf("file %s successfully opened, fileId: %d\n", paramStr, fileid);
+		printf("file %s successfully opened, fileId: %d\n", obuf, fileid);
 		kernel->machine->WriteRegister(2, 1);
 	}
 	
@@ -297,24 +297,23 @@ ExceptionHandler(ExceptionType which)
 	wsize = kernel->machine->ReadRegister(5);
 	wfileId = kernel->machine->ReadRegister(6);
 	wcount = 0;
-	char* wparamStr;
-	wparamStr = new char[128];
+	char wbuf[128];
 	do {
 		kernel->machine->ReadMem(wbase + wcount, 1, &wvalue);
-		wparamStr[wcount] = *(char*) &wvalue;
+		wbuf[wcount] = *(char*) &wvalue;
 		wcount++;
 	} while (*(char*) &wvalue != '\0' && wcount < wsize);
 
-	wparamStr[wsize] = '\0';
+	wbuf[wsize] = '\0';
 
 	/* Prepare Result */
-	wcount = SysWrite(wparamStr, wsize, wfileId);
+	wcount = SysWrite(wbuf, wsize, wfileId);
 	if (wcount > -1) {
-		printf("\"%s\" has been written to file successfully\n", wparamStr);
+		printf("\"wrote to file succeed\n", wbuf);
 		kernel->machine->WriteRegister(2, wcount);
 	} else {
 		printf("failed to write\n");
-		kernel->machine->WriteRegister(2, 1);
+		kernel->machine->WriteRegister(2, -1);
 	}
 	
 	/* Modify return point */
@@ -345,16 +344,16 @@ ExceptionHandler(ExceptionType which)
 	rbase = kernel->machine->ReadRegister(4);
 	rsize = kernel->machine->ReadRegister(5);
 	rfileId = kernel->machine->ReadRegister(6);
-	char* rparamStr;
-	rparamStr = new char[128];
+
+	char rstr[128];
 
 	/* Prepare Result */
-	rcount = SysRead(rparamStr, rsize, rfileId);
+	rcount = SysRead(rstr, rsize, rfileId);
 	if (rcount) {
 		for (int i = 0; i < rcount; i++) {
-			kernel->machine->WriteMem(rbase + i, 1, (int)rparamStr[i]);
+			kernel->machine->WriteMem(rbase + i, 1, (int)rstr[i]);
 		}
-		printf("succcessfully read, length: %d, content: %s\n", rcount, rparamStr);
+		printf("read success\n", rcount, rstr);
 	} else {
 		printf("failed to read\n");
 	}
@@ -386,54 +385,19 @@ ExceptionHandler(ExceptionType which)
 	int fileId;
 	fileId = kernel->machine->ReadRegister(4);
 
+	int CloseResult;
+	CloseResult = SysClose(fileId);
+
 	/* Prepare Result */
-	if (SysClose(fileId)) {
-		printf("file %d successfully closed\n", fileId);
+	if (CloseResult) {
+		printf("The file %d closed\ succeed!\n", fileId);
 		kernel->machine->WriteRegister(2, 1);
 	} else {
 		printf("file %d failed to close\n", fileid);
 		kernel->machine->WriteRegister(2, -1);
 	}
 	
-	/* Modify return point */
-	{
-	  /* set previous programm counter (debugging only)*/
-	  kernel->machine->WriteRegister(PrevPCReg, kernel->machine->ReadRegister(PCReg));
-
-	  /* set programm counter to next instruction (all Instructions are 4 byte wide)*/
-	  kernel->machine->WriteRegister(PCReg, kernel->machine->ReadRegister(PCReg) + 4);
-	  
-	  /* set next programm counter for brach execution */
-	  kernel->machine->WriteRegister(NextPCReg, kernel->machine->ReadRegister(PCReg)+4);
-	}
-
-	return;
-	
-	ASSERTNOTREACHED();
-
-	break;
-
-
-	// exception handler "remove"
-	  case SC_Remove:
-	DEBUG(dbgSys, "Remove" << kernel->machine->ReadRegister(4) << "\n");
-	
-	/* Process SysWrite Systemcall*/
-	fileId = kernel->machine->ReadRegister(4);
-
-	for (count = 0; (count < 128 && (char)value != '\0'); count++) {
-		kernel->machine->ReadMem(fileId + count, 1, &value);
-		paramStr[count] = (char)value;
-	}
-	
-	/* Prepare Result */
-	if (SysRemove(paramStr)) {
-		printf("\"%s\" has been removed successfully\n", paramStr);
-		kernel->machine->WriteRegister(2, 1);
-	} else {
-		printf("file %s has failed to write\n", paramStr);
-		kernel->machine->WriteRegister(2, -1);
-	}
+	kernel->machine->WriteRegister(2, (int)CloseResult);
 
 	/* Modify return point */
 	{
@@ -452,6 +416,46 @@ ExceptionHandler(ExceptionType which)
 	ASSERTNOTREACHED();
 
 	break;
+
+
+	// // exception handler "remove"
+	//   case SC_Remove:
+	// DEBUG(dbgSys, "Remove" << kernel->machine->ReadRegister(4) << "\n");
+	
+	// /* Process SysWrite Systemcall*/
+	// fileId = kernel->machine->ReadRegister(4);
+
+	// for (count = 0; (count < 128 && (char)value != '\0'); count++) {
+	// 	kernel->machine->ReadMem(fileId + count, 1, &value);
+	// 	paramStr[count] = (char)value;
+	// }
+	
+	// /* Prepare Result */
+	// if (SysRemove(paramStr)) {
+	// 	printf("\"%s\" has been removed successfully\n", paramStr);
+	// 	kernel->machine->WriteRegister(2, 1);
+	// } else {
+	// 	printf("file %s has failed to write\n", paramStr);
+	// 	kernel->machine->WriteRegister(2, -1);
+	// }
+
+	// /* Modify return point */
+	// {
+	//   /* set previous programm counter (debugging only)*/
+	//   kernel->machine->WriteRegister(PrevPCReg, kernel->machine->ReadRegister(PCReg));
+
+	//   /* set programm counter to next instruction (all Instructions are 4 byte wide)*/
+	//   kernel->machine->WriteRegister(PCReg, kernel->machine->ReadRegister(PCReg) + 4);
+	  
+	//   /* set next programm counter for brach execution */
+	//   kernel->machine->WriteRegister(NextPCReg, kernel->machine->ReadRegister(PCReg)+4);
+	// }
+
+	// return;
+	
+	// ASSERTNOTREACHED();
+
+	// break;
 
 
 	// exception handler "exec"

@@ -7,6 +7,7 @@
         "iostream": "cpp",
         "ostream": "c",
         "numeric": "c",
-        "sstream": "c"
+        "sstream": "c",
+        "memory_resource": "c"
     }
 }

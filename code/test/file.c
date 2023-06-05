@@ -1,16 +1,18 @@
 #include "syscall.h"
 
 int main() {
-    char* file1 = "xfish_test1.txt";
-    char* file2 = "xfish_test2.txt";
-    char* buffer = "xfish writes";
+    char* file1 = "file1.txt";
+    char* file2 = "file2.txt";
+
+    char buf[128];
 
     int fileId1;
     int fileId2;
-    Create(file1);
-    Create(file2);
     fileId1 = Open(file1);
-    Write(buffer, 12, fileId1);
-    Close(fileId1);
-    Remove(file2);
+    Create(file2);
+    Read(buf, 128, fileId1);
+    fileId2 = Open(file2);
+    Write(buf, 128, fileId2);
+    Close(file1);
+    Close(file2);
 }

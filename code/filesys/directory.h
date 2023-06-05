@@ -50,6 +50,8 @@ class DirectoryEntry {
 
 class Directory {
   public:
+    Directory();
+    Directory(int sector, int size);
     Directory(int size); 		// Initialize an empty directory
 					// with space for "size" files
     ~Directory();			// De-allocate the directory
@@ -70,14 +72,24 @@ class Directory {
     void Print();			// Verbose print of the contents
 					//  of the directory -- all the file
 					//  names and their contents.
+    void setSector(int sector) {this->sector = sector;}
+    int getSector() {return sector;}
+
+    static void selfTest();
 
   private:
     int tableSize;			// Number of directory entries
     DirectoryEntry *table;		// Table of pairs: 
-					// <file name, file header location> 
+					// <file name, file header location>
+    int sector;
 
     int FindIndex(char *name);		// Find the index into the directory 
 					//  table corresponding to "name"
+    int namex(char* path, int nameparent, char* name);
+    char* skipelem(char* path, char* name);
+    int dirlookup(char* name);
+    bool AddInCurrentDir(char* name, int newSector);
+    bool RemoveInCurrentDir(char* name);
 };
 
 #endif // DIRECTORY_H
